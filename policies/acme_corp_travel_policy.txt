@@ -1,0 +1,124 @@
+Company: ACME Corporation
+Policy Version: 2.1
+Effective Date: 2024-01-01
+
+CORPORATE TRAVEL POLICY
+
+========================================
+1. FLIGHT CABIN CLASS POLICY
+========================================
+
+Executive Level:
+- International flights over 6 hours: Business class allowed
+- Domestic flights over 4 hours: Premium economy allowed
+- All other flights: Economy class
+
+Senior Manager Level:
+- International flights over 8 hours: Business class allowed
+- International flights over 5 hours: Premium economy allowed
+- Domestic flights: Economy class
+
+Manager Level:
+- International flights over 10 hours: Premium economy allowed
+- All other flights: Economy class
+
+Staff and Contractors:
+- All flights: Economy class only
+
+========================================
+2. COST APPROVAL REQUIREMENTS
+========================================
+
+All travel costs exceeding the following thresholds require manager approval:
+
+- Executives: $5,000 per trip
+- Senior Managers: $3,000 per trip
+- Managers: $2,000 per trip
+- Staff: $1,500 per trip
+- Contractors: $800 per trip
+
+Emergency travel: Thresholds increased by 50%
+Conference travel: Standard thresholds apply
+
+========================================
+3. ADVANCE BOOKING REQUIREMENTS
+========================================
+
+All travel must be booked in advance:
+
+- Standard business travel: 14 days minimum
+- Conference travel: 30 days minimum (recommended for better rates)
+- Emergency travel: Advance booking requirement waived
+
+Late bookings may result in:
+- Higher airfares
+- Limited seat selection
+- Additional approval requirements
+
+========================================
+4. PREFERRED AIRLINES
+========================================
+
+Preferred Airlines (in order of preference):
+1. Delta Airlines
+2. United Airlines
+3. American Airlines
+4. Southwest Airlines
+
+Employees should book with preferred airlines when:
+- Price is within 10% of lowest fare
+- Schedule meets business needs
+- Loyalty program benefits apply
+
+Non-preferred airlines require:
+- Justification for selection
+- Price comparison documentation
+
+========================================
+5. BAGGAGE ALLOWANCE
+========================================
+
+Checked baggage reimbursement:
+
+Base Allowance by Level:
+- Executives: 3 checked bags
+- Senior Managers: 2 checked bags
+- Managers: 2 checked bags
+- Staff: 1 checked bag
+- Contractors: 1 checked bag
+
+Extended Travel Bonus:
+- Trips over 7 days: +1 additional bag
+
+Excess baggage fees:
+- Estimated at $35 per additional bag
+- Requires justification and approval
+
+========================================
+6. GENERAL GUIDELINES
+========================================
+
+- Always book the most economical option that meets business needs
+- Consider total travel time, not just flight cost
+- Loyalty programs: Employees may keep loyalty points/miles
+- Travel insurance: Included for international trips over $2,000
+- Rental cars: Mid-size or smaller unless business need requires larger vehicle
+
+========================================
+7. EXCEPTIONS
+========================================
+
+Exceptions to this policy may be granted for:
+- Medical requirements or disabilities
+- Client-facing travel requiring enhanced presentation
+- Security concerns
+- Significant cost savings through upgrades
+
+All exceptions require:
+- Written justification
+- Director-level approval
+- Documentation of circumstances
+
+========================================
+END OF POLICY
+========================================
