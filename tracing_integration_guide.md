@@ -99,14 +99,104 @@ with tracer.start_as_current_span("local_span_test"):
 ## 🔹 4. KQL Queries for Application Insights
 Once spans are flowing to Application Insights, use these queries for debugging and evaluation tracking.
 
-### **Query 1 — All traces grouped by span name**
+### Main Query for LLM Traces
+```kql
+// Helper function to determine Gen AI role based on event name
+let get_role = (event_name: string) { 
+    iff(event_name == "gen_ai.choice", "assistant", split(event_name, ".")[1])
+};
+let get_event_name = (customDimensions: dynamic, message: string) {  iff(customDimensions["event.name"] == "", message, customDimensions["event.name"]) };
+let get_response_id = (customDimensions: dynamic) { 
+    iff(
+        customDimensions["gen_ai.response.id"] == "", 
+        iff(customDimensions["gen_ai.thread.run.id"] == "", "", strcat(tostring(customDimensions["gen_ai.thread.id"]), "/", tostring(customDimensions["gen_ai.thread.run.id"]))),
+        tostring(customDimensions["gen_ai.response.id"]))
+}; 
+let is_completion_message = (customDimensions: dynamic, event_name: string) { event_name == "gen_ai.choice" or (event_name == "gen_ai.assistant.message" and customDimensions["gen_ai.thread.run.id"] != "") };
+let get_evaluator_name = (customDimensions: dynamic, event_name: string) { iff(customDimensions["gen_ai.evaluator.name"] == "", split(event_name, ".")[2], tostring(customDimensions["gen_ai.evaluator.name"])) };
+// Retrieve all GenAI operations
+let gen_ai_operations = requests | union dependencies
+| where timestamp between (datetime(2025-10-30T05:34:42.826Z) .. datetime(2025-11-06T05:34:42.826Z))
+| where isnotnull(customDimensions["gen_ai.system"]) or isnotnull(customDimensions["gen_ai.provider.name"])
+| summarize count() by operation_Id;
+// Retrieve Gen AI content within the specified date range
+let gen_ai_prompts_and_completions = traces
+    | where timestamp between (datetime(2025-10-30T05:34:42.826Z) .. datetime(2025-11-06T05:34:42.826Z))
+    | extend event_name = get_event_name(customDimensions, message)
+    | where (event_name startswith "gen_ai") and (event_name !startswith "gen_ai.evaluation")
+    | extend event_content = iff(message startswith ("gen_ai"), tostring(customDimensions["gen_ai.event.content"]), message)
+    | extend json = parse_json(event_content)
+    | extend role = get_role(event_name)
+    | extend content = bag_merge(bag_pack("timestamp", timestamp, "role", role), iff(json["message"] != "", json.message, json))
+    | extend is_completion = is_completion_message(customDimensions, event_name)    
+    | project 
+        operation_Id,
+        id = operation_ParentId, 
+        response_id = get_response_id(customDimensions),       
+        prompt = iff(is_completion, dynamic(null), content),
+        completion = iff(is_completion, content, dynamic(null)),
+        content,
+        role,
+        timestamp;
+// Retrieve root span for each operation
+let root_spans = gen_ai_operations | join kind=inner (union requests, dependencies) on operation_Id
+  | where operation_ParentId == "" or operation_Id == operation_ParentId
+  | project root_name = name, root_start_time = timestamp, root_span_type = type, root_duration = duration, root_success = success, root_span_id = id, operation_Id;
+// Retrieve GenAI evaluation events
+let eval_data = traces
+  | where timestamp between (datetime(2025-10-30T05:34:42.826Z) .. datetime(2025-11-06T05:34:42.826Z))
+  | extend event_name = get_event_name(customDimensions, message)
+  | where event_name startswith "gen_ai.evaluation"
+  | extend  response_id = get_response_id(customDimensions)
+  | where isnotempty(response_id)
+  | extend evaluator_name = get_evaluator_name(customDimensions, event_name), evaluation_score = todouble(customDimensions["gen_ai.evaluation.score"]), evaluation_id = iff(customDimensions["gen_ai.evaluation.id"] != "", customDimensions["gen_ai.evaluation.id"], tostring(timestamp))
+  | summarize 
+     evals = make_list(bag_pack("evaluatorName", evaluator_name, "evaluationScore", evaluation_score, "evaluationId", evaluation_id, "comments", message, "responseId", response_id)) by response_id;
+// Perform final join and summarization to merge GenAI spans, non-GenAI spans, and additional attributes for displaying the root span of the trace
+let operations = gen_ai_operations 
+| join kind=inner (union requests, dependencies) on operation_Id
+| extend response_id = get_response_id(customDimensions)
+| join kind=leftouter eval_data on response_id
+| join kind=leftouter (gen_ai_prompts_and_completions) on id, operation_Id
+| extend spanType = "GenAI"
+| join kind=inner (root_spans) on operation_Id
+| summarize  
+  name = any(root_name),
+  startTime = tostring(any(root_start_time)),
+  spanType = any(root_span_type),
+  raw_prompts = make_list(prompt), 
+  raw_completions = make_list(completion),
+  raw_evals = make_set(evals),
+  id = any(root_span_id),
+  duration = any(root_duration),
+  success = any(root_success),
+  inputToken = sum(toint(customDimensions["gen_ai.usage.input_tokens"])),
+  outputToken = sum(toint(customDimensions["gen_ai.usage.output_tokens"])),
+  childCount = dcount(id) - 1  // each span has a unique id, -1 to exclude the root
+  by 
+  operation_Id;
+operations  
+| join kind=leftouter (gen_ai_prompts_and_completions | where role == "user" | summarize input=arg_min(todatetime(timestamp), prompt)[1]["content"] by operation_Id) on operation_Id
+| join kind=leftouter (gen_ai_prompts_and_completions | where role == "system" | summarize system=arg_min(todatetime(timestamp), prompt)[1]["content"] by operation_Id) on operation_Id
+| join kind=leftouter (gen_ai_prompts_and_completions | where role == "assistant" | summarize output=arg_max(todatetime(timestamp), completion)[1]["content"] by operation_Id) on operation_Id
+| join kind=leftouter (operations | mv-expand raw_evals 
+        | summarize evaluationScore = avg(todouble(raw_evals.evaluationScore)), evaluationCount = count() by evaluatorName = tostring(raw_evals.evaluatorName), operation_Id
+        | summarize events = make_list(pack("eventName", evaluatorName, "evaluationScore", evaluationScore, "count", evaluationCount)) by operation_Id
+) on operation_Id
+| project name, system, input = coalesce(input["text"]["value"], tostring(input)), output = coalesce(output["text"]["value"], tostring(output)), events, startTime, duration, inputToken, outputToken, success, operationId = operation_Id, raw_prompts, raw_completions, raw_evals, childCount, operationParentId = operation_Id, id
+| order by tolower(name) asc
+```
+
+### Additional Queries
+
+### **Query 2 — All traces grouped by span name**
 ```kql
 traces
 | summarize Count = count(), AvgDuration = avg(duration) by name
 | order by Count desc
 ```
 
-### **Query 2 — Function performance overview**
+### **Query 3 — Function performance overview**
 ```kql
 traces
 | where message contains "function.duration_ms"
@@ -115,7 +205,7 @@ traces
 | order by AvgDurationMs desc
 ```
 
-### **Query 3 — AI Evaluation Scores**
+### **Query 4 — AI Evaluation Scores**
 ```kql
 traces
 | where name startswith "gen_ai.evaluation"
@@ -125,14 +215,14 @@ traces
 | order by AvgScore desc
 ```
 
-### **Query 4 — End-to-End Request Correlation**
+### **Query 5 — End-to-End Request Correlation**
 ```kql
 requests
 | join kind=inner (traces) on operation_Id
 | project operation_Id, name, timestamp, message, customDimensions
 ```
 
-### **Query 5 — Recent Errors in Traces**
+### **Query 6 — Recent Errors in Traces**
 ```kql
 traces
 | where severityLevel >= 3
@@ -178,7 +268,5 @@ This will emit structured telemetry visible both in Azure AI Foundry and in Appl
 ---
 
 **References:**
-- [Microsoft Learn: View trace results for AI applications](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/trace-results-sdk)
 - [Azure Monitor OpenTelemetry documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/opentelemetry-enable)
-- [KQL reference for Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/query-language)
 
