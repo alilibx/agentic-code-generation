@@ -1,18 +1,41 @@
 # 🚀 Policy-to-Code Pipeline
 
-> Transform plain text policies into executable Python functions with AI integration
+> Transform plain text policies into executable Python functions with AI-powered generation
 
-Convert corporate policies from plain English into production-ready Python code with automated testing and Azure OpenAI integration. Perfect for travel policies, expense rules, compliance checks, and more.
+Convert corporate policies from plain English into production-ready Python code with **AI-powered parsing and code generation**. Perfect for travel policies, expense rules, compliance checks, and more.
 
 ## ✨ Features
 
-- **📝 Plain Text Input**: Write policies in natural language
+- **🤖 AI-Powered Parsing**: Uses GPT-4 to understand natural language policies
+- **🧠 Intelligent Code Generation**: AI generates custom Python functions from rules
+- **✅ Policy Validation**: Detects conflicts, gaps, and ambiguities automatically
+- **📝 Flexible Input**: No strict format required - write policies naturally
 - **🔄 Automatic Code Generation**: Generates clean, executable Python functions
 - **📦 Version Control**: Built-in versioning and storage system
 - **🧪 Auto-Generated Tests**: Comprehensive pytest test suites
-- **🤖 Azure OpenAI Integration**: Natural language queries powered by GPT-4
-- **⚡ Zero Dependencies**: Core functionality requires no external packages
+- **💬 Natural Language Queries**: Ask questions about policies in plain English
 - **🔌 Easy Integration**: Works with existing Python projects
+
+## 🆕 **NEW: AI-Powered Features**
+
+The pipeline now uses **Azure OpenAI (GPT-4)** for:
+- **Smart Policy Parsing**: Understands context and intent, not just patterns
+- **Custom Code Generation**: Creates sophisticated logic beyond templates
+- **Policy Validation**: Finds issues, conflicts, and missing rules
+- **Natural Language Interface**: Ask questions, get answers
+
+See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.
+
+### Quick Comparison
+
+| Feature | Before (v1) | Now (v2 - AI-Powered) |
+|---------|-------------|----------------------|
+| Policy Parsing | Regex patterns | LLM understanding |
+| Code Generation | Fixed templates | AI-generated custom code |
+| Validation | None | AI-powered analysis |
+| Policy Format | Strict format | Natural language |
+
+**Ready to try it?** See [Getting Started with AI](#-ai-powered-quick-start) below!
 
 ## 🎯 Use Cases
 
@@ -22,7 +45,7 @@ Convert corporate policies from plain English into production-ready Python code 
 - **HR Policy Enforcement**: Automate PTO, benefits, and policy checks
 - **Custom Business Rules**: Any text-based rules → executable code
 
-## 🏃 Quick Start
+## 🏃 AI-Powered Quick Start
 
 ### 1. Installation
 
@@ -30,84 +53,144 @@ Convert corporate policies from plain English into production-ready Python code 
 git clone <repository-url>
 cd agentic-rules-to-code
 
-# No dependencies required for basic usage!
-# Optional: For Azure OpenAI integration
+# Install dependencies (required for AI features)
 pip install -r requirements.txt
 ```
 
-### 2. Run the Quick Start Demo
+### 2. Configure Azure OpenAI
+
+Create a `.env` file:
+```bash
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_API_KEY=your-api-key-here
+AZURE_OPENAI_DEPLOYMENT=gpt-4
+```
+
+### 3. Run the AI Demo
 
 ```bash
-python examples/quick_start.py
+python3 ai_example.py
 ```
 
 This will:
-1. Load an example travel policy
-2. Generate Python functions
-3. Create unit tests
-4. Demonstrate usage
+1. 🤖 Parse policies using AI (natural language understanding)
+2. ✅ Validate policies for completeness and conflicts
+3. 🧠 Generate custom Python functions with AI
+4. 🧪 Create comprehensive unit tests
+5. 📊 Show validation results and generated code
 
-### 3. Use in Your Code
+### 4. Use AI-Powered Pipeline in Your Code
 
 ```python
-from src.pipeline import PolicyPipeline
+from src.ai_pipeline import AIPolicyPipeline
 
-# Create pipeline
-pipeline = PolicyPipeline()
+# Create AI-powered pipeline
+pipeline = AIPolicyPipeline()
 
-# Process your policy
-result = pipeline.process_policy_file("policies/my_policy.txt")
+# Process your policy with AI
+result = pipeline.process_policy_file(
+    "policies/my_policy.txt",
+    validate_first=True  # AI validation before processing
+)
 
-# Use the generated functions
+# Use the AI-generated functions
 module = pipeline.storage.import_function(result['company_id'])
 decision = module.check_cabin_class("manager", "international", 8.0)
-print(decision['cabin'])  # "premium_economy"
+print(decision)
 ```
+
+## 🔄 Classic (Non-AI) Quick Start
+
+**Note**: The classic regex-based pipeline is still available but AI-powered is recommended.
+
+```bash
+# Run classic pipeline without AI
+python examples/quick_start.py
+```
+
+See [AI_FEATURES.md](AI_FEATURES.md) for detailed comparison.
 
 ## 📚 Documentation
 
+### 📖 Complete Documentation
+
+- **[AI_FEATURES.md](AI_FEATURES.md)** - Complete guide to AI-powered features (NEW!)
+  - How AI parsing works
+  - AI code generation
+  - Policy validation
+  - Usage examples
+  - API reference
+  - Best practices
+
 ### Core Components
 
-1. **Policy Parser** (`src/generator/policy_parser.py`)
-   - Parses plain text policies
-   - Extracts structured rules
-   - Identifies policy types
+#### 🤖 AI-Powered Components (NEW)
 
-2. **Code Generator** (`src/generator/code_generator.py`)
-   - Generates Python functions from rules
-   - Creates type-safe, documented code
-   - Includes helper functions
+1. **AI Policy Parser** (`src/ai_integration/ai_policy_parser.py`)
+   - LLM-based natural language understanding
+   - Context-aware rule extraction
+   - Policy validation and conflict detection
+   - Confidence scoring
 
-3. **Function Storage** (`src/storage/function_storage.py`)
+2. **AI Code Generator** (`src/ai_integration/ai_code_generator.py`)
+   - AI-generated custom Python functions
+   - Sophisticated logic beyond templates
+   - Adaptive to policy complexity
+   - Production-ready code output
+
+3. **AI Pipeline** (`src/ai_pipeline.py`)
+   - End-to-end AI-powered orchestration
+   - Integrated validation step
+   - Comprehensive error handling
+   - Progress reporting
+
+#### 📝 Classic Components
+
+4. **Policy Parser** (`src/generator/policy_parser.py`)
+   - Regex-based parsing (legacy)
+   - Pattern matching
+   - Structured rule extraction
+
+5. **Code Generator** (`src/generator/code_generator.py`)
+   - Template-based generation (legacy)
+   - Fixed patterns
+   - Type-safe output
+
+6. **Function Storage** (`src/storage/function_storage.py`)
    - Versions generated code
    - Manages function registry
    - Enables code reuse
 
-4. **Test Generator** (`src/testing/test_generator.py`)
+7. **Test Generator** (`src/testing/test_generator.py`)
    - Creates comprehensive test suites
    - Includes edge cases
    - Parametrized tests
 
-5. **Azure OpenAI Client** (`src/ai_integration/azure_openai_client.py`)
+8. **Azure OpenAI Client** (`src/ai_integration/azure_openai_client.py`)
    - Natural language queries
    - Function calling integration
    - Interactive chat mode
 
-### Pipeline Workflow
+### AI-Powered Pipeline Workflow
 
 ```
 ┌─────────────────┐
-│  Policy Text    │  (Plain English)
+│  Policy Text    │  (Natural Language - Flexible Format)
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  Policy Parser  │  (Extract rules)
+│ 🤖 AI Validation│  (Detect conflicts, gaps, ambiguities)
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Code Generator  │  (Generate Python)
+│ 🧠 AI Parser    │  (LLM-based understanding)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ 🤖 AI Generator │  (Custom code generation)
 └────────┬────────┘
          │
          ▼
@@ -122,7 +205,7 @@ print(decision['cabin'])  # "premium_economy"
          │
          ▼
 ┌─────────────────┐
-│ Azure OpenAI    │  (AI Integration)
+│ 💬 AI Chat      │  (Natural language queries)
 └─────────────────┘
 ```
 
@@ -387,13 +470,15 @@ mypy src/
 
 ## 📊 Roadmap
 
-- [ ] Support for more policy types (HR, procurement, etc.)
+- [x] **AI-powered policy parsing**
+- [x] **AI-powered code generation**
+- [x] **Policy validation and conflict detection**
+- [ ] Support for more policy types
 - [ ] Web UI for policy management
 - [ ] Support for other LLM providers (Anthropic, OpenAI)
-- [ ] Policy validation and conflict detection
-- [ ] Export to other languages (JavaScript, Java)
 - [ ] Policy diff and merge tools
 - [ ] Cloud deployment templates
+- [ ] Learning from user corrections
 
 ## 🤝 Contributing
 
